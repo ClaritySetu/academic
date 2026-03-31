@@ -3,94 +3,709 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Attendance Tracker</title>
+    <title>PAC Physics Attendance</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f0f2f5; }
-        .stats-bar { position: sticky; top: 0; background: white; padding: 15px; display: flex; justify-content: space-around; font-weight: bold; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 100; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-        .student-card { padding: 20px; background: white; border: 1px solid #ccc; border-radius: 10px; text-align: center; cursor: pointer; transition: 0.2s; user-select: none; }
-        .student-card.present { background: #28a745; color: white; border-color: #1e7e34; }
-        .submit-btn { display: block; width: 100%; max-width: 300px; margin: 30px auto; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; }
-        #loading { text-align: center; font-size: 1.2em; margin-top: 50px; }
+        :root {
+            --bg: #f5f4f0;
+            --surface: #ffffff;
+            --border: #dddbd4;
+            --text: #1a1a18;
+            --muted: #888880;
+            --accent: #1a1a18;
+            --present: #2d6a4f;
+            --present-bg: #d8f3dc;
+            --present-border: #74c69d;
+            --absent: #9b2335;
+            --absent-bg: #fde8ec;
+            --absent-border: #e07b8a;
+            --blue: #1a56db;
+            --blue-bg: #ebf2ff;
+            --warn: #92400e;
+            --warn-bg: #fef3c7;
+            --new-student: #5b21b6;
+            --new-student-bg: #ede9fe;
+            --new-student-border: #a78bfa;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px 16px;
+        }
+
+        .container { max-width: 620px; margin: auto; }
+        .hidden { display: none !important; }
+
+        /* ── Header ── */
+        .app-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .app-header .logo {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600; font-size: 1.1em; letter-spacing: -0.5px;
+            background: var(--accent); color: white;
+            padding: 6px 10px; border-radius: 6px;
+        }
+        .app-header .title { font-size: 1em; font-weight: 500; color: var(--muted); letter-spacing: 0.02em; }
+
+        /* ── Landing ── */
+        .landing-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; padding: 40px 28px; text-align: center;
+        }
+        .landing-card h2 { font-family: 'IBM Plex Mono', monospace; font-size: 1.5em; margin-bottom: 8px; }
+        .landing-card p { color: var(--muted); margin-bottom: 30px; font-size: 0.95em; }
+        .landing-btns { display: flex; flex-direction: column; gap: 12px; }
+        .menu-btn {
+            padding: 16px; font-size: 1em; font-weight: 600;
+            border: none; border-radius: 10px; cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s; letter-spacing: 0.02em;
+        }
+        .menu-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .btn-new { background: var(--accent); color: white; }
+        .btn-view { background: var(--surface); color: var(--accent); border: 1.5px solid var(--border); }
+
+        /* ── App Screen ── */
+        .back-btn {
+            background: none; border: none; color: var(--blue); cursor: pointer;
+            font-size: 0.9em; font-weight: 600; font-family: 'IBM Plex Sans', sans-serif;
+            display: flex; align-items: center; gap: 4px; margin-bottom: 16px; padding: 0;
+        }
+        .back-btn:hover { text-decoration: underline; }
+
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 16px; margin-bottom: 14px;
+        }
+
+        .field-label {
+            font-size: 0.78em; font-weight: 600; color: var(--muted);
+            letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;
+        }
+
+        select {
+            width: 100%; padding: 10px 12px;
+            border: 1.5px solid var(--border); border-radius: 7px;
+            font-family: 'IBM Plex Sans', sans-serif; font-size: 0.95em;
+            background: var(--bg); color: var(--text); cursor: pointer; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center;
+        }
+        select:focus { outline: none; border-color: var(--accent); }
+
+        /* ── Draft Banner ── */
+        .draft-banner {
+            background: var(--warn-bg); border: 1px solid #f6c95a;
+            border-radius: 8px; padding: 10px 14px; font-size: 0.88em; color: var(--warn);
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; margin-bottom: 14px;
+        }
+        .draft-banner button {
+            background: none; border: 1px solid var(--warn); color: var(--warn);
+            border-radius: 5px; padding: 4px 10px; font-size: 0.85em; cursor: pointer;
+            font-family: 'IBM Plex Sans', sans-serif; font-weight: 600; white-space: nowrap;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+        .tool-btn {
+            flex: 1; min-width: 100px; padding: 9px 12px; font-size: 0.85em; font-weight: 600;
+            font-family: 'IBM Plex Sans', sans-serif; border-radius: 7px;
+            border: 1.5px solid var(--border); background: var(--bg);
+            cursor: pointer; transition: 0.15s; letter-spacing: 0.01em;
+        }
+        .tool-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        .tool-btn.present-tool { border-color: var(--present-border); color: var(--present); background: var(--present-bg); }
+        .tool-btn.present-tool:hover { background: var(--present); color: white; border-color: var(--present); }
+        .tool-btn.absent-tool { border-color: var(--absent-border); color: var(--absent); background: var(--absent-bg); }
+        .tool-btn.absent-tool:hover { background: var(--absent); color: white; border-color: var(--absent); }
+
+        /* ── Add Student ── */
+        .add-student-row {
+            display: flex; gap: 8px; margin-top: 10px; align-items: center;
+        }
+        .add-student-row input {
+            flex: 1; padding: 9px 12px;
+            border: 1.5px solid var(--new-student-border); border-radius: 7px;
+            font-family: 'IBM Plex Sans', sans-serif; font-size: 0.92em;
+            background: var(--new-student-bg); color: var(--text);
+        }
+        .add-student-row input:focus { outline: none; border-color: var(--new-student); }
+        .add-student-row input::placeholder { color: #a78bfa; }
+        .add-student-row button {
+            padding: 9px 16px; border: none;
+            background: var(--new-student); color: white;
+            border-radius: 7px; font-weight: 600; font-size: 0.88em;
+            font-family: 'IBM Plex Sans', sans-serif;
+            cursor: pointer; white-space: nowrap; transition: 0.15s;
+        }
+        .add-student-row button:hover { background: #4c1d95; }
+        .add-student-row button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* ── Search ── */
+        .search-wrap { position: relative; }
+        .search-wrap input {
+            width: 100%; padding: 9px 12px 9px 34px;
+            border: 1.5px solid var(--border); border-radius: 7px;
+            font-family: 'IBM Plex Sans', sans-serif; font-size: 0.92em;
+            background: var(--bg); color: var(--text);
+        }
+        .search-wrap input:focus { outline: none; border-color: var(--accent); }
+        .search-icon {
+            position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+            color: var(--muted); font-size: 0.9em; pointer-events: none;
+        }
+
+        /* ── Stats ── */
+        .stats-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+        .stat-chip {
+            flex: 1; padding: 10px 8px; border-radius: 8px;
+            text-align: center; font-size: 0.85em; font-weight: 600; border: 1.5px solid;
+        }
+        .stat-chip.total  { border-color: var(--border); background: var(--surface); color: var(--text); }
+        .stat-chip.present { border-color: var(--present-border); background: var(--present-bg); color: var(--present); }
+        .stat-chip.absent  { border-color: var(--absent-border); background: var(--absent-bg); color: var(--absent); }
+        .stat-chip .big { display: block; font-size: 1.5em; line-height: 1.2; }
+
+        /* ── Grid ── */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+
+        .student-card {
+            padding: 13px 10px; background: var(--surface); border: 1.5px solid var(--border);
+            border-radius: 8px; text-align: center; cursor: pointer; user-select: none;
+            transition: transform 0.12s, box-shadow 0.12s;
+            font-size: 0.88em; font-weight: 500; line-height: 1.3;
+            animation: fadeIn 0.2s ease both;
+        }
+        .student-card:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.08); }
+        .student-card.present { background: var(--present-bg); border-color: var(--present-border); color: var(--present); }
+        .student-card.absent  { background: var(--absent-bg);  border-color: var(--absent-border);  color: var(--absent); }
+        .student-card.hidden-by-search { display: none; }
+
+        /* NEW student cards get a purple accent ring */
+        .student-card.is-new {
+            border-color: var(--new-student-border);
+            box-shadow: 0 0 0 2px var(--new-student-bg);
+        }
+        .student-card.is-new::after {
+            content: 'NEW';
+            display: block;
+            font-size: 0.65em;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 0.1em;
+            color: var(--new-student);
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            display: block; font-size: 0.75em; margin-top: 4px;
+            font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.05em;
+        }
+        .student-card.present .status-badge::before { content: '● P'; }
+        .student-card.absent  .status-badge::before { content: '● A'; color: var(--absent); }
+
+        /* ── Submit ── */
+        .submit-btn {
+            width: 100%; padding: 14px; background: var(--accent); color: white;
+            border: none; border-radius: 9px; font-size: 1em; font-weight: 600;
+            cursor: pointer; margin-top: 16px; font-family: 'IBM Plex Sans', sans-serif;
+            transition: 0.2s; letter-spacing: 0.02em;
+        }
+        .submit-btn:hover:not(:disabled) { background: #333; }
+        .submit-btn:disabled { opacity: 0.65; cursor: not-allowed; }
+        .submit-btn.success { background: var(--present); }
+
+        /* ── Confirm Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100; padding: 16px;
+        }
+        .modal-box {
+            background: var(--surface); border-radius: 14px; padding: 28px 24px;
+            max-width: 380px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+        .modal-box h3 { font-family: 'IBM Plex Mono', monospace; margin-bottom: 10px; font-size: 1.1em; }
+        .modal-box p { color: var(--muted); font-size: 0.93em; line-height: 1.5; margin-bottom: 6px; }
+        .modal-box .summary {
+            background: var(--bg); border-radius: 8px; padding: 12px 14px;
+            margin: 14px 0; font-size: 0.92em; line-height: 1.8;
+        }
+        .modal-box .summary span.p { color: var(--present); font-weight: 600; }
+        .modal-box .summary span.a { color: var(--absent); font-weight: 600; }
+        .modal-box .summary span.n { color: var(--new-student); font-weight: 600; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+        .modal-actions button {
+            flex: 1; padding: 11px; border-radius: 8px; border: 1.5px solid var(--border);
+            font-family: 'IBM Plex Sans', sans-serif; font-size: 0.95em; font-weight: 600;
+            cursor: pointer; transition: 0.15s;
+        }
+        .btn-cancel { background: var(--bg); color: var(--muted); }
+        .btn-confirm { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-confirm:hover { background: #333; }
+
+        #status-msg { text-align: center; padding: 8px; color: var(--muted); font-size: 0.9em; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     </style>
 </head>
 <body>
 
-<div class="stats-bar">
-    <div>Present: <span id="p-count">0</span></div>
-    <div>Absent: <span id="a-count">0</span></div>
+<div class="container">
+
+    <div class="app-header">
+        <div class="logo">PAC</div>
+        <div class="title">Physics Attendance System</div>
+    </div>
+
+    <!-- Landing -->
+    <div id="landing-screen" class="landing-card">
+        <h2>Attendance</h2>
+        <p>Mark today's class or review past records.</p>
+        <div class="landing-btns">
+            <button class="menu-btn btn-new" onclick="showMode('new')">+ Enter New Attendance</button>
+            <button class="menu-btn btn-view" onclick="showMode('view')">View Past Records</button>
+        </div>
+    </div>
+
+    <!-- App Screen -->
+    <div id="app-screen" class="hidden">
+        <button class="back-btn" onclick="goBack()">← Back to Menu</button>
+
+        <!-- Draft banner -->
+        <div id="draft-banner" class="draft-banner hidden">
+            <span>📋 Unsaved draft found for <strong id="draft-batch-name"></strong></span>
+            <button onclick="restoreDraft()">Restore Draft</button>
+        </div>
+
+        <!-- Batch Selector -->
+        <div class="card">
+            <div class="field-label">Batch</div>
+            <select id="batch-select" onchange="handleBatchChange(this.value)">
+                <option value="">— Select Batch —</option>
+            </select>
+        </div>
+
+        <!-- History controls (view mode) -->
+        <div id="history-controls" class="card hidden">
+            <div class="field-label">Date</div>
+            <select id="date-select">
+                <option value="">— Select Date —</option>
+            </select>
+            <button class="tool-btn" style="width:100%;margin-top:10px" onclick="loadHistory()">View Records</button>
+        </div>
+
+        <!-- Toolbar (new mode) -->
+        <div id="new-toolbar" class="card hidden">
+            <div style="margin-bottom:12px">
+                <div class="field-label" style="margin-bottom:6px">Quick Mark</div>
+                <div class="toolbar">
+                    <button class="tool-btn present-tool" onclick="markAll(true)">✓ All Present</button>
+                    <button class="tool-btn absent-tool"  onclick="markAll(false)">✗ All Absent</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom:12px">
+                <div class="field-label" style="margin-bottom:6px">Search Student</div>
+                <div class="search-wrap">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" placeholder="Type name to filter…" oninput="filterStudents(this.value)">
+                </div>
+            </div>
+
+            <div id="add-student-section" class="hidden">
+                <div class="field-label" style="margin-bottom:6px">Add New Student</div>
+                <div class="add-student-row">
+                    <input type="text" id="new-student-name" placeholder="Enter full name…" onkeydown="if(event.key==='Enter') addNewStudent()">
+                    <button id="add-student-btn" onclick="addNewStudent()">+ Add</button>
+                </div>
+                <div id="add-student-msg" style="font-size:0.82em;margin-top:6px;min-height:18px;"></div>
+            </div>
+        </div>
+
+        <!-- Search in view mode -->
+        <div id="view-search" class="card hidden">
+            <div class="field-label" style="margin-bottom:6px">Search Student</div>
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" placeholder="Type name to filter…" oninput="filterStudents(this.value)">
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div id="stats" class="stats-bar hidden">
+            <div class="stat-chip total"><span class="big" id="t-count">0</span>Total</div>
+            <div class="stat-chip present"><span class="big" id="p-count">0</span>Present</div>
+            <div class="stat-chip absent"><span class="big" id="a-count">0</span>Absent</div>
+        </div>
+
+        <div id="status-msg"></div>
+        <div class="grid" id="student-grid"></div>
+
+        <button id="submit-btn" class="submit-btn hidden" onclick="openConfirmModal()">Submit Attendance</button>
+    </div>
+
 </div>
 
-<div id="loading">Loading student list from Google Drive...</div>
-<div class="grid" id="student-grid"></div>
-
-<button class="submit-btn" id="submit-btn" onclick="submitAttendance()" style="display:none;">Submit Attendance</button>
+<!-- Confirmation Modal -->
+<div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h3>Confirm Submission</h3>
+        <p>You are submitting attendance for:</p>
+        <div class="summary">
+            <div><strong>Batch:</strong> <span id="m-batch">—</span></div>
+            <div><strong>Date:</strong> <span id="m-date">—</span></div>
+            <div><strong>Present:</strong> <span class="p" id="m-present">0</span></div>
+            <div><strong>Absent:</strong> <span class="a" id="m-absent">0</span></div>
+            <div id="m-new-row" class="hidden"><strong>New students:</strong> <span class="n" id="m-new">0</span> (will be permanently added)</div>
+        </div>
+        <p>Please verify before confirming.</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-confirm" onclick="confirmSubmit()">Yes, Submit</button>
+        </div>
+    </div>
+</div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby6eLwUsAecZI3u9agG798A8JfoiKM-nFffeJGAz7Xmgv9D0RWDTfLx8hx3R38-WRv-Xg/exec"; 
-    let attendance = {};
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby6eLwUsAecZI3u9agG798A8JfoiKM-nFffeJGAz7Xmgv9D0RWDTfLx8hx3R38-WRv-Xg/exec";
+    const DRAFT_KEY = "pac_attendance_draft";
 
-    async function loadStudents() {
+    let currentMode = "";
+    let currentBatch = "";
+    let attendance = {};
+    let newStudents = []; // tracks names added this session (not yet in sheet)
+
+    // ── Init ──
+    (async function init() {
         try {
-            const response = await fetch(GAS_URL);
-            const students = await response.json();
-            renderGrid(students);
+            const res = await fetch(GAS_URL);
+            const batches = await res.json();
+            const select = document.getElementById('batch-select');
+            batches.forEach(b => { select.innerHTML += `<option value="${b}">${b}</option>`; });
         } catch (e) {
-            document.getElementById('loading').innerText = "Error loading students. Check GAS URL and permissions.";
+            document.getElementById('status-msg').innerText = "Failed to load batches.";
+        }
+        checkForDraft();
+    })();
+
+    // ── Draft ──
+    function checkForDraft() {
+        const draft = getSavedDraft();
+        if (draft && draft.batch && Object.keys(draft.attendance).length > 0) {
+            document.getElementById('draft-batch-name').innerText = draft.batch;
+            document.getElementById('draft-banner').classList.remove('hidden');
+        }
+    }
+    function getSavedDraft() {
+        try { return JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch { return null; }
+    }
+    function saveDraft() {
+        if (!currentBatch || currentMode !== 'new') return;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ batch: currentBatch, attendance, newStudents }));
+    }
+    function clearDraft() {
+        localStorage.removeItem(DRAFT_KEY);
+        document.getElementById('draft-banner').classList.add('hidden');
+    }
+    async function restoreDraft() {
+        const draft = getSavedDraft();
+        if (!draft) return;
+        showMode('new');
+        document.getElementById('batch-select').value = draft.batch;
+        await handleBatchChange(draft.batch);
+        // Restore new students first
+        if (draft.newStudents && draft.newStudents.length > 0) {
+            draft.newStudents.forEach(name => addCardToGrid(name, true));
+        }
+        // Restore attendance states
+        Object.entries(draft.attendance).forEach(([name, status]) => {
+            attendance[name] = status;
+            const card = document.querySelector(`.student-card[data-name="${CSS.escape(name)}"]`);
+            if (card) {
+                card.classList.remove('present', 'absent');
+                card.classList.add(status ? 'present' : 'absent');
+            }
+        });
+        updateUI();
+        document.getElementById('draft-banner').classList.add('hidden');
+    }
+
+    // ── Mode ──
+    function showMode(mode) {
+        currentMode = mode;
+        document.getElementById('landing-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
+
+        if (mode === 'view') {
+            document.getElementById('history-controls').classList.remove('hidden');
+            document.getElementById('new-toolbar').classList.add('hidden');
+            document.getElementById('view-search').classList.remove('hidden');
+            document.getElementById('submit-btn').classList.add('hidden');
+        } else {
+            document.getElementById('history-controls').classList.add('hidden');
+            document.getElementById('new-toolbar').classList.remove('hidden');
+            document.getElementById('view-search').classList.add('hidden');
+            document.getElementById('submit-btn').classList.remove('hidden');
         }
     }
 
-    function renderGrid(students) {
-        const grid = document.getElementById('student-grid');
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('submit-btn').style.display = 'block';
+    function goBack() { location.reload(); }
 
-        students.forEach(name => {
-            attendance[name] = false;
-            const card = document.createElement('div');
-            card.className = 'student-card';
-            card.innerText = name;
-            card.onclick = () => {
-                attendance[name] = !attendance[name];
-                card.classList.toggle('present');
-                updateUI(students.length);
-            };
-            grid.appendChild(card);
-        });
-        updateUI(students.length);
+    // ── Batch change ──
+    async function handleBatchChange(batch) {
+        if (!batch) return;
+        currentBatch = batch;
+        newStudents = [];
+        document.getElementById('status-msg').innerText = "Loading students…";
+        document.getElementById('stats').classList.add('hidden');
+        document.getElementById('add-student-section').classList.add('hidden');
+
+        try {
+            const res = await fetch(`${GAS_URL}?batch=${encodeURIComponent(batch)}`);
+            const students = await res.json();
+            renderGrid(students);
+            // Show add student section only in new mode
+            if (currentMode === 'new') {
+                document.getElementById('add-student-section').classList.remove('hidden');
+            }
+        } catch(e) {
+            document.getElementById('status-msg').innerText = "Error loading students.";
+        }
+
+        if (currentMode === 'view') {
+            try {
+                const dateRes = await fetch(`${GAS_URL}?batch=${encodeURIComponent(batch)}&action=getDates`);
+                const dates = await dateRes.json();
+                const dSelect = document.getElementById('date-select');
+                dSelect.innerHTML = '<option value="">— Select Date —</option>';
+                dates.reverse().forEach(d => { dSelect.innerHTML += `<option value="${d}">${d}</option>`; });
+            } catch(e) {}
+        }
     }
 
-    function updateUI(total) {
+    // ── Render grid ──
+    function renderGrid(students) {
+        const grid = document.getElementById('student-grid');
+        grid.innerHTML = "";
+        attendance = {};
+        students.forEach((name, index) => {
+            const clean = name.trim();
+            attendance[clean] = false;
+            const card = createCard(clean, index, false);
+            grid.appendChild(card);
+        });
+        document.getElementById('status-msg').innerText = "";
+        document.getElementById('stats').classList.remove('hidden');
+        updateUI();
+    }
+
+    // ── Create a card element ──
+    function createCard(name, index, isNew) {
+        const card = document.createElement('div');
+        card.className = 'student-card' + (isNew ? ' is-new' : '');
+        card.setAttribute('data-name', name);
+        card.setAttribute('data-index', index);
+        card.style.animationDelay = `${index * 0.025}s`;
+        card.innerHTML = `${name}<span class="status-badge"></span>`;
+        card.onclick = () => toggleCard(card, name);
+        return card;
+    }
+
+    // ── Add card to grid (for new students added mid-session) ──
+    function addCardToGrid(name, isRestoring = false) {
+        const grid = document.getElementById('student-grid');
+        const existingCards = grid.querySelectorAll('.student-card');
+        const index = existingCards.length;
+        attendance[name] = true; // default new student to Present
+        if (!isRestoring) newStudents.push(name);
+        const card = createCard(name, index, true);
+        card.classList.add('present'); // default present
+        grid.appendChild(card);
+        updateUI();
+        saveDraft();
+    }
+
+    // ── Add New Student (called from UI) ──
+    async function addNewStudent() {
+        const input = document.getElementById('new-student-name');
+        const msgEl = document.getElementById('add-student-msg');
+        const btn = document.getElementById('add-student-btn');
+        const name = input.value.trim();
+
+        if (!name) { showAddMsg("Please enter a name.", "var(--absent)"); return; }
+        if (!currentBatch) { showAddMsg("Select a batch first.", "var(--absent)"); return; }
+
+        // Guard: duplicate check in current grid
+        const existing = Object.keys(attendance).map(n => n.toLowerCase());
+        if (existing.includes(name.toLowerCase())) {
+            showAddMsg("This student is already in the list.", "var(--absent)");
+            return;
+        }
+
+        // Disable button while saving
+        btn.disabled = true;
+        btn.innerText = "Adding…";
+        showAddMsg("", "");
+
+        try {
+            await fetch(GAS_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "addStudent", batch: currentBatch, name })
+            });
+            // Add card to grid regardless of CORS quirk
+            addCardToGrid(name);
+            input.value = "";
+            showAddMsg(`✓ "${name}" added and marked Present.`, "var(--present)");
+        } catch(e) {
+            // GAS often triggers catch due to CORS redirect even on success
+            addCardToGrid(name);
+            input.value = "";
+            showAddMsg(`✓ "${name}" added (verify in sheet).`, "var(--present)");
+        }
+
+        btn.disabled = false;
+        btn.innerText = "+ Add";
+    }
+
+    function showAddMsg(msg, color) {
+        const el = document.getElementById('add-student-msg');
+        el.innerText = msg;
+        el.style.color = color;
+    }
+
+    // ── Toggle ──
+    function toggleCard(card, name) {
+        attendance[name] = !attendance[name];
+        card.classList.toggle('present', attendance[name]);
+        card.classList.toggle('absent', !attendance[name]);
+        updateUI();
+        saveDraft();
+    }
+
+    // ── Mark All ──
+    function markAll(isPresent) {
+        Object.keys(attendance).forEach(name => { attendance[name] = isPresent; });
+        document.querySelectorAll('.student-card').forEach(card => {
+            card.classList.toggle('present', isPresent);
+            card.classList.toggle('absent', !isPresent);
+        });
+        updateUI();
+        saveDraft();
+    }
+
+    // ── Search ──
+    function filterStudents(query) {
+        const q = query.trim().toLowerCase();
+        document.querySelectorAll('.student-card').forEach(card => {
+            const name = card.getAttribute('data-name').toLowerCase();
+            card.classList.toggle('hidden-by-search', q.length > 0 && !name.includes(q));
+        });
+    }
+
+    // ── Stats ──
+    function updateUI() {
         const p = Object.values(attendance).filter(v => v).length;
+        const total = Object.keys(attendance).length;
+        document.getElementById('t-count').innerText = total;
         document.getElementById('p-count').innerText = p;
         document.getElementById('a-count').innerText = total - p;
     }
 
-    async function submitAttendance() {
+    // ── History ──
+    async function loadHistory() {
+        const date = document.getElementById('date-select').value;
+        if (!date) return alert("Please select a date.");
+        document.getElementById('status-msg').innerText = "Loading records…";
+        try {
+            const res = await fetch(`${GAS_URL}?batch=${encodeURIComponent(currentBatch)}&action=viewAttendance&date=${encodeURIComponent(date)}`);
+            const statusList = await res.json();
+            document.querySelectorAll('.student-card').forEach(card => {
+                const idx = parseInt(card.getAttribute('data-index'));
+                const name = card.getAttribute('data-name');
+                const rawStatus = (statusList[idx] || "").toString().trim().toUpperCase();
+                const isP = rawStatus === "P" || rawStatus === "PRESENT";
+                card.classList.remove('present', 'absent');
+                card.classList.add(isP ? 'present' : 'absent');
+                attendance[name] = isP;
+            });
+            updateUI();
+            document.getElementById('status-msg').innerText = "";
+        } catch(e) {
+            document.getElementById('status-msg').innerText = "Error loading records.";
+        }
+    }
+
+    // ── Confirm Modal ──
+    function openConfirmModal() {
+        if (!currentBatch) return alert("Select a batch first.");
+        const p = Object.values(attendance).filter(v => v).length;
+        const total = Object.keys(attendance).length;
+        const today = new Date().toLocaleDateString('en-IN', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+
+        document.getElementById('m-batch').innerText = currentBatch;
+        document.getElementById('m-date').innerText = today;
+        document.getElementById('m-present').innerText = p;
+        document.getElementById('m-absent').innerText = total - p;
+
+        // Show new students count if any
+        const newRow = document.getElementById('m-new-row');
+        if (newStudents.length > 0) {
+            document.getElementById('m-new').innerText = newStudents.length;
+            newRow.classList.remove('hidden');
+        } else {
+            newRow.classList.add('hidden');
+        }
+
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('confirm-modal').classList.add('hidden');
+    }
+
+    // ── Submit ──
+    async function confirmSubmit() {
+        closeModal();
         const btn = document.getElementById('submit-btn');
         btn.disabled = true;
-        btn.innerText = "Saving...";
+        btn.innerText = "Saving…";
 
-        const payload = Object.keys(attendance).map(name => ({
-            name: name,
+        const list = Object.keys(attendance).map(name => ({
+            name,
             status: attendance[name] ? "Present" : "Absent"
         }));
 
         try {
-            // Note: 'no-cors' is used because GAS redirects are tricky with standard fetch
             await fetch(GAS_URL, {
                 method: "POST",
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ batch: currentBatch, attendance: list })
             });
-            alert("Attendance recorded!");
-            location.reload();
-        } catch (e) {
-            alert("Success! (Note: Browser may show error due to CORS, but check your sheet)");
-            location.reload();
+            btn.innerText = "✓ Saved Successfully";
+            btn.classList.add('success');
+            clearDraft();
+            newStudents = [];
+        } catch(e) {
+            btn.innerText = "✓ Saved (Check Sheet)";
+            btn.classList.add('success');
+            clearDraft();
+            newStudents = [];
         }
+
+        setTimeout(() => {
+            btn.innerText = "Submit Attendance";
+            btn.classList.remove('success');
+            btn.disabled = false;
+        }, 4000);
     }
 
-    loadStudents();
+    // Close modal on overlay click
+    document.getElementById('confirm-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
 </script>
 </body>
 </html>
