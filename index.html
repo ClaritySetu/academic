@@ -698,13 +698,14 @@
 
     // ── Toggle ──
     function toggleCard(card, name) {
+        if (currentMode === 'view') return; // Exit early if in view-only mode
+    
         attendance[name] = !attendance[name];
         card.classList.toggle('present', attendance[name]);
         card.classList.toggle('absent', !attendance[name]);
         updateUI();
         saveDraft();
     }
-
     // ── Mark All (respects active filter — only marks visible cards) ──
     function markAll(isPresent) {
         document.querySelectorAll('.student-card:not(.hidden-by-filter)').forEach(card => {
