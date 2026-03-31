@@ -26,6 +26,9 @@
             --new-student: #5b21b6;
             --new-student-bg: #ede9fe;
             --new-student-border: #a78bfa;
+            --mentee: #0369a1;
+            --mentee-bg: #e0f2fe;
+            --mentee-border: #7dd3fc;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -123,18 +126,48 @@
         .tool-btn.absent-tool { border-color: var(--absent-border); color: var(--absent); background: var(--absent-bg); }
         .tool-btn.absent-tool:hover { background: var(--absent); color: white; border-color: var(--absent); }
 
+        /* ── Filter Toggle ── */
+        .filter-toggle {
+            display: flex; gap: 0; border: 1.5px solid var(--border); border-radius: 8px;
+            overflow: hidden; width: 100%; margin-bottom: 0;
+        }
+        .filter-toggle button {
+            flex: 1; padding: 9px 12px; font-size: 0.85em; font-weight: 600;
+            font-family: 'IBM Plex Sans', sans-serif; border: none;
+            background: var(--bg); color: var(--muted); cursor: pointer;
+            transition: 0.15s; letter-spacing: 0.01em;
+        }
+        .filter-toggle button:not(:last-child) { border-right: 1.5px solid var(--border); }
+        .filter-toggle button.active {
+            background: var(--mentee-bg); color: var(--mentee);
+            border-color: var(--mentee-border);
+        }
+        .filter-toggle button.active.all-active {
+            background: var(--accent); color: white;
+        }
+
         /* ── Add Student ── */
         .add-student-row {
-            display: flex; gap: 8px; margin-top: 10px; align-items: center;
+            display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap;
         }
-        .add-student-row input {
-            flex: 1; padding: 9px 12px;
+        .add-student-row input[type="text"] {
+            flex: 1; min-width: 140px; padding: 9px 12px;
             border: 1.5px solid var(--new-student-border); border-radius: 7px;
             font-family: 'IBM Plex Sans', sans-serif; font-size: 0.92em;
             background: var(--new-student-bg); color: var(--text);
         }
-        .add-student-row input:focus { outline: none; border-color: var(--new-student); }
-        .add-student-row input::placeholder { color: #a78bfa; }
+        .add-student-row input[type="text"]:focus { outline: none; border-color: var(--new-student); }
+        .add-student-row input[type="text"]::placeholder { color: #a78bfa; }
+        .relation-select {
+            padding: 9px 28px 9px 10px; border: 1.5px solid var(--new-student-border);
+            border-radius: 7px; font-family: 'IBM Plex Sans', sans-serif; font-size: 0.88em;
+            background: var(--new-student-bg); color: var(--new-student);
+            cursor: pointer; appearance: none; font-weight: 600;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235b21b6' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 8px center;
+            width: auto; flex-shrink: 0;
+        }
+        .relation-select:focus { outline: none; border-color: var(--new-student); }
         .add-student-row button {
             padding: 9px 16px; border: none;
             background: var(--new-student); color: white;
@@ -170,6 +203,13 @@
         .stat-chip.absent  { border-color: var(--absent-border); background: var(--absent-bg); color: var(--absent); }
         .stat-chip .big { display: block; font-size: 1.5em; line-height: 1.2; }
 
+        /* ── Filter notice ── */
+        .filter-notice {
+            background: var(--mentee-bg); border: 1px solid var(--mentee-border);
+            border-radius: 8px; padding: 8px 14px; font-size: 0.84em; color: var(--mentee);
+            font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+        }
+
         /* ── Grid ── */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 
@@ -184,8 +224,23 @@
         .student-card.present { background: var(--present-bg); border-color: var(--present-border); color: var(--present); }
         .student-card.absent  { background: var(--absent-bg);  border-color: var(--absent-border);  color: var(--absent); }
         .student-card.hidden-by-search { display: none; }
+        .student-card.hidden-by-filter { display: none; }
 
-        /* NEW student cards get a purple accent ring */
+        /* Mentee indicator dot on card */
+        .student-card.is-mentee::before {
+            content: '● MENTEE';
+            display: block;
+            font-size: 0.62em;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 0.08em;
+            color: var(--mentee);
+            margin-bottom: 4px;
+            opacity: 0.8;
+        }
+        .student-card.is-mentee.present::before { color: var(--present); opacity: 0.7; }
+        .student-card.is-mentee.absent::before  { color: var(--absent);  opacity: 0.7; }
+
+        /* NEW student cards */
         .student-card.is-new {
             border-color: var(--new-student-border);
             box-shadow: 0 0 0 2px var(--new-student-bg);
@@ -237,6 +292,7 @@
         .modal-box .summary span.p { color: var(--present); font-weight: 600; }
         .modal-box .summary span.a { color: var(--absent); font-weight: 600; }
         .modal-box .summary span.n { color: var(--new-student); font-weight: 600; }
+        .modal-box .summary span.mentee-scope { color: var(--mentee); font-weight: 600; }
         .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
         .modal-actions button {
             flex: 1; padding: 11px; border-radius: 8px; border: 1.5px solid var(--border);
@@ -300,6 +356,16 @@
 
         <!-- Toolbar (new mode) -->
         <div id="new-toolbar" class="card hidden">
+
+            <!-- Filter Toggle -->
+            <div style="margin-bottom:14px">
+                <div class="field-label" style="margin-bottom:6px">View</div>
+                <div class="filter-toggle">
+                    <button id="filter-all-btn" class="active all-active" onclick="setFilter('all')">All Students</button>
+                    <button id="filter-mentee-btn" onclick="setFilter('mentee')">Mentees Only</button>
+                </div>
+            </div>
+
             <div style="margin-bottom:12px">
                 <div class="field-label" style="margin-bottom:6px">Quick Mark</div>
                 <div class="toolbar">
@@ -320,6 +386,10 @@
                 <div class="field-label" style="margin-bottom:6px">Add New Student</div>
                 <div class="add-student-row">
                     <input type="text" id="new-student-name" placeholder="Enter full name…" onkeydown="if(event.key==='Enter') addNewStudent()">
+                    <select id="new-student-relation" class="relation-select">
+                        <option value="non-mentee">Non-Mentee</option>
+                        <option value="mentee">Mentee</option>
+                    </select>
                     <button id="add-student-btn" onclick="addNewStudent()">+ Add</button>
                 </div>
                 <div id="add-student-msg" style="font-size:0.82em;margin-top:6px;min-height:18px;"></div>
@@ -342,6 +412,11 @@
             <div class="stat-chip absent"><span class="big" id="a-count">0</span>Absent</div>
         </div>
 
+        <!-- Filter notice -->
+        <div id="filter-notice" class="filter-notice hidden">
+            👤 Showing mentees only — Quick Mark applies to visible students only
+        </div>
+
         <div id="status-msg"></div>
         <div class="grid" id="student-grid"></div>
 
@@ -358,6 +433,7 @@
         <div class="summary">
             <div><strong>Batch:</strong> <span id="m-batch">—</span></div>
             <div><strong>Date:</strong> <span id="m-date">—</span></div>
+            <div id="m-scope-row" class="hidden"><strong>Scope:</strong> <span class="mentee-scope" id="m-scope">—</span></div>
             <div><strong>Present:</strong> <span class="p" id="m-present">0</span></div>
             <div><strong>Absent:</strong> <span class="a" id="m-absent">0</span></div>
             <div id="m-new-row" class="hidden"><strong>New students:</strong> <span class="n" id="m-new">0</span> (will be permanently added)</div>
@@ -377,7 +453,9 @@
     let currentMode = "";
     let currentBatch = "";
     let attendance = {};
-    let newStudents = []; // tracks names added this session (not yet in sheet)
+    let relations = {};     // { studentName: "mentee" | "non-mentee" }
+    let newStudents = [];   // tracks names added this session
+    let activeFilter = "all"; // "all" | "mentee"
 
     // ── Init ──
     (async function init() {
@@ -405,7 +483,7 @@
     }
     function saveDraft() {
         if (!currentBatch || currentMode !== 'new') return;
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ batch: currentBatch, attendance, newStudents }));
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ batch: currentBatch, attendance, relations, newStudents }));
     }
     function clearDraft() {
         localStorage.removeItem(DRAFT_KEY);
@@ -417,11 +495,9 @@
         showMode('new');
         document.getElementById('batch-select').value = draft.batch;
         await handleBatchChange(draft.batch);
-        // Restore new students first
         if (draft.newStudents && draft.newStudents.length > 0) {
-            draft.newStudents.forEach(name => addCardToGrid(name, true));
+            draft.newStudents.forEach(s => addCardToGrid(s.name, s.relation, true));
         }
-        // Restore attendance states
         Object.entries(draft.attendance).forEach(([name, status]) => {
             attendance[name] = status;
             const card = document.querySelector(`.student-card[data-name="${CSS.escape(name)}"]`);
@@ -445,6 +521,7 @@
             document.getElementById('new-toolbar').classList.add('hidden');
             document.getElementById('view-search').classList.remove('hidden');
             document.getElementById('submit-btn').classList.add('hidden');
+            document.getElementById('filter-notice').classList.add('hidden');
         } else {
             document.getElementById('history-controls').classList.add('hidden');
             document.getElementById('new-toolbar').classList.remove('hidden');
@@ -455,11 +532,38 @@
 
     function goBack() { location.reload(); }
 
+    // ── Filter Toggle ──
+    function setFilter(filter) {
+        activeFilter = filter;
+        document.getElementById('filter-all-btn').classList.toggle('active', filter === 'all');
+        document.getElementById('filter-all-btn').classList.toggle('all-active', filter === 'all');
+        document.getElementById('filter-mentee-btn').classList.toggle('active', filter === 'mentee');
+        document.getElementById('filter-notice').classList.toggle('hidden', filter === 'all');
+        applyFilter();
+        updateUI();
+    }
+
+    function applyFilter() {
+        document.querySelectorAll('.student-card').forEach(card => {
+            const name = card.getAttribute('data-name');
+            const isMentee = relations[name] === 'mentee';
+            if (activeFilter === 'mentee') {
+                card.classList.toggle('hidden-by-filter', !isMentee);
+            } else {
+                card.classList.remove('hidden-by-filter');
+            }
+        });
+    }
+
     // ── Batch change ──
     async function handleBatchChange(batch) {
         if (!batch) return;
         currentBatch = batch;
         newStudents = [];
+        activeFilter = 'all';
+        document.getElementById('filter-all-btn').classList.add('active', 'all-active');
+        document.getElementById('filter-mentee-btn').classList.remove('active');
+        document.getElementById('filter-notice').classList.add('hidden');
         document.getElementById('status-msg').innerText = "Loading students…";
         document.getElementById('stats').classList.add('hidden');
         document.getElementById('add-student-section').classList.add('hidden');
@@ -467,8 +571,8 @@
         try {
             const res = await fetch(`${GAS_URL}?batch=${encodeURIComponent(batch)}`);
             const students = await res.json();
+            // students is now array of { name, relation }
             renderGrid(students);
-            // Show add student section only in new mode
             if (currentMode === 'new') {
                 document.getElementById('add-student-section').classList.remove('hidden');
             }
@@ -488,14 +592,18 @@
     }
 
     // ── Render grid ──
+    // students: array of { name, relation } OR plain strings (backward compat)
     function renderGrid(students) {
         const grid = document.getElementById('student-grid');
         grid.innerHTML = "";
         attendance = {};
-        students.forEach((name, index) => {
-            const clean = name.trim();
-            attendance[clean] = false;
-            const card = createCard(clean, index, false);
+        relations = {};
+        students.forEach((item, index) => {
+            const name = (typeof item === 'string') ? item.trim() : item.name.trim();
+            const relation = (typeof item === 'string') ? 'non-mentee' : (item.relation || 'non-mentee');
+            attendance[name] = false;
+            relations[name] = relation;
+            const card = createCard(name, index, false, relation);
             grid.appendChild(card);
         });
         document.getElementById('status-msg').innerText = "";
@@ -504,26 +612,38 @@
     }
 
     // ── Create a card element ──
-    function createCard(name, index, isNew) {
+    function createCard(name, index, isNew, relation) {
+        const isMentee = relation === 'mentee';
+        let cls = 'student-card';
+        if (isNew) cls += ' is-new';
+        if (isMentee) cls += ' is-mentee';
+
         const card = document.createElement('div');
-        card.className = 'student-card' + (isNew ? ' is-new' : '');
+        card.className = cls;
         card.setAttribute('data-name', name);
         card.setAttribute('data-index', index);
+        card.setAttribute('data-relation', relation || 'non-mentee');
         card.style.animationDelay = `${index * 0.025}s`;
         card.innerHTML = `${name}<span class="status-badge"></span>`;
         card.onclick = () => toggleCard(card, name);
         return card;
     }
 
-    // ── Add card to grid (for new students added mid-session) ──
-    function addCardToGrid(name, isRestoring = false) {
+    // ── Add card to grid ──
+    function addCardToGrid(name, relation, isRestoring = false) {
         const grid = document.getElementById('student-grid');
         const existingCards = grid.querySelectorAll('.student-card');
         const index = existingCards.length;
-        attendance[name] = true; // default new student to Present
-        if (!isRestoring) newStudents.push(name);
-        const card = createCard(name, index, true);
-        card.classList.add('present'); // default present
+        const rel = relation || 'non-mentee';
+        attendance[name] = true;
+        relations[name] = rel;
+        if (!isRestoring) newStudents.push({ name, relation: rel });
+        const card = createCard(name, index, true, rel);
+        card.classList.add('present');
+        // Apply current filter immediately
+        if (activeFilter === 'mentee' && rel !== 'mentee') {
+            card.classList.add('hidden-by-filter');
+        }
         grid.appendChild(card);
         updateUI();
         saveDraft();
@@ -532,21 +652,20 @@
     // ── Add New Student (called from UI) ──
     async function addNewStudent() {
         const input = document.getElementById('new-student-name');
-        const msgEl = document.getElementById('add-student-msg');
+        const relationEl = document.getElementById('new-student-relation');
         const btn = document.getElementById('add-student-btn');
         const name = input.value.trim();
+        const relation = relationEl.value;
 
         if (!name) { showAddMsg("Please enter a name.", "var(--absent)"); return; }
         if (!currentBatch) { showAddMsg("Select a batch first.", "var(--absent)"); return; }
 
-        // Guard: duplicate check in current grid
         const existing = Object.keys(attendance).map(n => n.toLowerCase());
         if (existing.includes(name.toLowerCase())) {
             showAddMsg("This student is already in the list.", "var(--absent)");
             return;
         }
 
-        // Disable button while saving
         btn.disabled = true;
         btn.innerText = "Adding…";
         showAddMsg("", "");
@@ -554,17 +673,17 @@
         try {
             await fetch(GAS_URL, {
                 method: "POST",
-                body: JSON.stringify({ action: "addStudent", batch: currentBatch, name })
+                body: JSON.stringify({ action: "addStudent", batch: currentBatch, name, relation })
             });
-            // Add card to grid regardless of CORS quirk
-            addCardToGrid(name);
+            addCardToGrid(name, relation);
             input.value = "";
-            showAddMsg(`✓ "${name}" added and marked Present.`, "var(--present)");
+            const label = relation === 'mentee' ? 'Mentee' : 'Non-Mentee';
+            showAddMsg(`✓ "${name}" added as ${label} and marked Present.`, "var(--present)");
         } catch(e) {
-            // GAS often triggers catch due to CORS redirect even on success
-            addCardToGrid(name);
+            addCardToGrid(name, relation);
             input.value = "";
-            showAddMsg(`✓ "${name}" added (verify in sheet).`, "var(--present)");
+            const label = relation === 'mentee' ? 'Mentee' : 'Non-Mentee';
+            showAddMsg(`✓ "${name}" added as ${label} (verify in sheet).`, "var(--present)");
         }
 
         btn.disabled = false;
@@ -586,10 +705,11 @@
         saveDraft();
     }
 
-    // ── Mark All ──
+    // ── Mark All (respects active filter — only marks visible cards) ──
     function markAll(isPresent) {
-        Object.keys(attendance).forEach(name => { attendance[name] = isPresent; });
-        document.querySelectorAll('.student-card').forEach(card => {
+        document.querySelectorAll('.student-card:not(.hidden-by-filter)').forEach(card => {
+            const name = card.getAttribute('data-name');
+            attendance[name] = isPresent;
             card.classList.toggle('present', isPresent);
             card.classList.toggle('absent', !isPresent);
         });
@@ -602,17 +722,22 @@
         const q = query.trim().toLowerCase();
         document.querySelectorAll('.student-card').forEach(card => {
             const name = card.getAttribute('data-name').toLowerCase();
-            card.classList.toggle('hidden-by-search', q.length > 0 && !name.includes(q));
+            const hiddenBySearch = q.length > 0 && !name.includes(q);
+            card.classList.toggle('hidden-by-search', hiddenBySearch);
         });
     }
 
-    // ── Stats ──
+    // ── Stats (counts only visible cards) ──
     function updateUI() {
-        const p = Object.values(attendance).filter(v => v).length;
-        const total = Object.keys(attendance).length;
+        let total = 0, present = 0;
+        document.querySelectorAll('.student-card:not(.hidden-by-filter)').forEach(card => {
+            const name = card.getAttribute('data-name');
+            total++;
+            if (attendance[name]) present++;
+        });
         document.getElementById('t-count').innerText = total;
-        document.getElementById('p-count').innerText = p;
-        document.getElementById('a-count').innerText = total - p;
+        document.getElementById('p-count').innerText = present;
+        document.getElementById('a-count').innerText = total - present;
     }
 
     // ── History ──
@@ -642,16 +767,26 @@
     // ── Confirm Modal ──
     function openConfirmModal() {
         if (!currentBatch) return alert("Select a batch first.");
-        const p = Object.values(attendance).filter(v => v).length;
-        const total = Object.keys(attendance).length;
+        const visibleCards = document.querySelectorAll('.student-card:not(.hidden-by-filter)');
+        let present = 0, total = visibleCards.length;
+        visibleCards.forEach(card => { if (attendance[card.getAttribute('data-name')]) present++; });
+
         const today = new Date().toLocaleDateString('en-IN', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
 
         document.getElementById('m-batch').innerText = currentBatch;
         document.getElementById('m-date').innerText = today;
-        document.getElementById('m-present').innerText = p;
-        document.getElementById('m-absent').innerText = total - p;
+        document.getElementById('m-present').innerText = present;
+        document.getElementById('m-absent').innerText = total - present;
 
-        // Show new students count if any
+        // Show scope if mentee filter is active
+        const scopeRow = document.getElementById('m-scope-row');
+        if (activeFilter === 'mentee') {
+            document.getElementById('m-scope').innerText = 'Mentees only';
+            scopeRow.classList.remove('hidden');
+        } else {
+            scopeRow.classList.add('hidden');
+        }
+
         const newRow = document.getElementById('m-new-row');
         if (newStudents.length > 0) {
             document.getElementById('m-new').innerText = newStudents.length;
@@ -668,16 +803,19 @@
     }
 
     // ── Submit ──
+    // Only submits visible (non-filtered-out) students when mentee filter is active
     async function confirmSubmit() {
         closeModal();
         const btn = document.getElementById('submit-btn');
         btn.disabled = true;
         btn.innerText = "Saving…";
 
-        const list = Object.keys(attendance).map(name => ({
-            name,
-            status: attendance[name] ? "Present" : "Absent"
-        }));
+        // Only include cards that are currently visible (not hidden by filter)
+        const list = [];
+        document.querySelectorAll('.student-card:not(.hidden-by-filter)').forEach(card => {
+            const name = card.getAttribute('data-name');
+            list.push({ name, status: attendance[name] ? "Present" : "Absent" });
+        });
 
         try {
             await fetch(GAS_URL, {
@@ -702,7 +840,6 @@
         }, 4000);
     }
 
-    // Close modal on overlay click
     document.getElementById('confirm-modal').addEventListener('click', function(e) {
         if (e.target === this) closeModal();
     });
